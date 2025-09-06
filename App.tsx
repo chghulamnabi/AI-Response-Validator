@@ -4,7 +4,8 @@ import { PromptInput } from './components/PromptInput';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { Hero } from './components/Hero';
 import { Loader } from './components/Loader';
-import { generateAndValidate } from './services/geminiService';
+import { PromptSuggestions } from './components/PromptSuggestions';
+import { generateAndValidate, getPromptSuggestions } from './services/geminiService';
 import type { ValidationResult } from './types';
 
 const App: React.FC = () => {
@@ -15,6 +16,8 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [suggestions, setSuggestions] = useState<string[] | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState<boolean>(false);
 
   const handleValidation = useCallback(async () => {
     if (!prompt) {
@@ -29,12 +32,28 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setValidationResult(null);
+    setSuggestions(null);
     setShowResults(true);
 
     try {
       const result = await generateAndValidate(prompt, groundTruth, model);
       setValidationResult(result);
-    } catch (err) {
+
+      const needsImprovement = result.hallucination.score < 70 || (result.validity && result.validity.score < 70);
+      if (needsImprovement) {
+        setIsSuggesting(true);
+        try {
+          const newSuggestions = await getPromptSuggestions(prompt, result.aiResponse, result);
+          setSuggestions(newSuggestions);
+        } catch (suggestionError) {
+          console.error("Failed to get prompt suggestions:", suggestionError);
+        } finally {
+          setIsSuggesting(false);
+        }
+      }
+
+    } catch (err)
+ {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {
@@ -48,6 +67,12 @@ const App: React.FC = () => {
     setValidationResult(null);
     setError(null);
     setShowResults(false);
+    setSuggestions(null);
+  };
+
+  const applySuggestion = (suggestion: string) => {
+    setPrompt(suggestion);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -83,6 +108,17 @@ const App: React.FC = () => {
             )}
           </div>
         )}
+
+        {(isSuggesting || (suggestions && suggestions.length > 0)) && (
+          <div className="mt-8">
+            <PromptSuggestions
+              isLoading={isSuggesting}
+              suggestions={suggestions}
+              onSuggestionClick={applySuggestion}
+            />
+          </div>
+        )}
+
       </main>
       <footer className="text-center py-6 text-gray-500 text-sm">
         <p>Powered by Google Gemini</p>

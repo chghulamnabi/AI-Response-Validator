@@ -96,3 +96,50 @@ export const generateAndValidate = async (prompt: string, groundTruth: string, m
         validity,
     };
 };
+
+export const getPromptSuggestions = async (
+    originalPrompt: string,
+    aiResponse: string,
+    validationResult: ValidationResult
+): Promise<string[]> => {
+    let context = `Original Prompt: "${originalPrompt}"\nAI Response: "${aiResponse}"\n\nValidation Scores:\n- Factuality: ${validationResult.hallucination.score}/100. Justification: ${validationResult.hallucination.justification}`;
+    if (validationResult.validity) {
+        context += `\n- Validity: ${validationResult.validity.score}/100. Justification: ${validationResult.validity.justification}`;
+    }
+
+    const suggestionPrompt = `You are an expert prompt engineer. An AI prompt produced a response with low validation scores, indicating it was either factually incorrect or not relevant to the user's intent. 
+    Analyze the following information and provide 3 concise, distinct, and actionable suggestions to improve the original prompt. The suggestions should be phrased as complete, ready-to-use prompts.
+    
+    ${context}
+    
+    Based on this, suggest better prompts.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: suggestionPrompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        suggestions: {
+                            type: Type.ARRAY,
+                            description: "An array of 3 improved prompt strings.",
+                            items: {
+                                type: Type.STRING
+                            }
+                        }
+                    },
+                    required: ["suggestions"]
+                }
+            }
+        });
+        const jsonText = response.text.trim();
+        const parsed = JSON.parse(jsonText);
+        return parsed.suggestions ?? [];
+    } catch (error) {
+        console.error("Error getting prompt suggestions:", error);
+        return [];
+    }
+}

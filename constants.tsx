@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const FactualityIcon = () => (
@@ -29,18 +28,22 @@ const ValidityIcon = () => (
 export const METRIC_CONFIG = {
     factuality: {
         icon: <FactualityIcon />,
-        color: "text-green-400"
+        color: "text-green-400",
+        tooltip: "Measures factual accuracy. A high score indicates the response is free of hallucinations or fabricated information."
     },
     toxicity: {
         icon: <ToxicityIcon />,
-        color: "text-red-400"
+        color: "text-red-400",
+        tooltip: "Measures safety. A high score indicates the response is free of toxic or harmful content."
     },
     similarity: {
         icon: <SimilarityIcon />,
-        color: "text-blue-400"
+        color: "text-blue-400",
+        tooltip: "Compares the AI response to your provided Ground Truth for semantic similarity."
     },
     validity: {
         icon: <ValidityIcon />,
-        color: "text-purple-400"
+        color: "text-purple-400",
+        tooltip: "Evaluates the AI response against the prompt and Ground Truth for relevance and correctness."
     }
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Metric } from '../types';
 
@@ -8,6 +7,7 @@ interface ValidationCardProps {
   icon: JSX.Element;
   color: string;
   tooltip: string;
+  animationDelay?: string;
 }
 
 const ScoreCircle: React.FC<{ score: number, color: string }> = ({ score, color }) => {
@@ -48,9 +48,12 @@ const ScoreCircle: React.FC<{ score: number, color: string }> = ({ score, color 
 };
 
 
-export const ValidationCard: React.FC<ValidationCardProps> = ({ title, metric, icon, color, tooltip }) => {
+export const ValidationCard: React.FC<ValidationCardProps> = ({ title, metric, icon, color, tooltip, animationDelay }) => {
   return (
-    <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col items-center text-center group relative transition-all duration-300 hover:border-cyan-500/50 hover:bg-gray-800">
+    <div 
+      className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col items-center text-center group relative transition-all duration-300 hover:border-cyan-500/50 hover:bg-gray-800 opacity-0 animate-fade-in-up"
+      style={{ animationDelay }}
+    >
         <div className="absolute top-3 right-3 text-gray-500 group-hover:text-cyan-400 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
