@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   selectPlan: (plan: Plan) => void;
   decrementUsage: () => void;
+  loginWithProvider: (provider: 'google' | 'github') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -80,6 +81,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithProvider = async (provider: 'google' | 'github'): Promise<void> => {
+    // This is a simulation. In a real app, you would use an OAuth library.
+    const email = `user@${provider}.com`;
+
+    // Check if user already exists from a previous social login
+    // This logic is simplified; a real app would check a user DB by provider ID
+    const allUsers = JSON.parse(localStorage.getItem(USERS_DB_KEY) || '[]');
+    const existingUserRecord = allUsers.find((u: any) => u.email === email);
+    
+    if (existingUserRecord) {
+        // Attempt to load their state; if not, create a new one.
+        const existingUserState = JSON.parse(localStorage.getItem(`${CURRENT_USER_KEY}_${email}`) || 'null');
+        if (existingUserState) {
+            updateUser(existingUserState);
+            return;
+        }
+    }
+
+    // If no existing record, create a new user profile for them
+    const newUser: User = {
+        email,
+        plan: 'free',
+        usesRemaining: PLAN_CONFIG.free.uses,
+    };
+
+    // Use a unique key for storing this user's state to not overwrite others
+    localStorage.setItem(`${CURRENT_USER_KEY}_${email}`, JSON.stringify(newUser));
+    updateUser(newUser);
+
+
+    // Also add to the "DB" if they don't exist, so they can "log in" again.
+    if (!existingUserRecord) {
+        allUsers.push({ email, pass: 'social_login_placeholder' }); 
+        localStorage.setItem(USERS_DB_KEY, JSON.stringify(allUsers));
+    }
+  };
+
   const logout = () => {
     updateUser(null);
   };
@@ -87,17 +125,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const selectPlan = (plan: Plan) => {
     if (user) {
       const usesRemaining = PLAN_CONFIG[plan].uses;
-      updateUser({ ...user, plan, usesRemaining });
+      const updatedUser = { ...user, plan, usesRemaining };
+      updateUser(updatedUser);
+      // Persist this specific user's state if they are a social login user
+      if (user.email.includes('@google.com') || user.email.includes('@github.com')) {
+          localStorage.setItem(`${CURRENT_USER_KEY}_${user.email}`, JSON.stringify(updatedUser));
+      }
     }
   };
 
   const decrementUsage = useCallback(() => {
     if (user && user.usesRemaining > 0) {
-      updateUser({ ...user, usesRemaining: user.usesRemaining - 1 });
+      const updatedUser = { ...user, usesRemaining: user.usesRemaining - 1 };
+      updateUser(updatedUser);
+      // Persist this specific user's state if they are a social login user
+      if (user.email.includes('@google.com') || user.email.includes('@github.com')) {
+          localStorage.setItem(`${CURRENT_USER_KEY}_${user.email}`, JSON.stringify(updatedUser));
+      }
     }
   }, [user]);
 
-  const value = { user, loading, signup, login, logout, selectPlan, decrementUsage };
+  const value = { user, loading, signup, login, logout, selectPlan, decrementUsage, loginWithProvider };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
