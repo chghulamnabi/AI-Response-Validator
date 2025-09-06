@@ -11,12 +11,11 @@ interface PromptInputProps {
   onClear: () => void;
   isLoading: boolean;
   showClearButton: boolean;
+  isOutOfUses: boolean;
 }
 
 const modelOptions = [
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
 ];
 
 export const PromptInput: React.FC<PromptInputProps> = ({
@@ -30,6 +29,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   onClear,
   isLoading,
   showClearButton,
+  isOutOfUses,
 }) => {
   return (
     <div className="space-y-6">
@@ -86,10 +86,15 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           />
         </div>
       </div>
+        {isOutOfUses && (
+            <div className="text-center text-yellow-400 bg-yellow-900/30 border border-yellow-800 p-3 rounded-lg">
+                You have no uses remaining. Please upgrade your plan to continue.
+            </div>
+        )}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 pt-2">
         <button
           onClick={onValidate}
-          disabled={isLoading || !prompt || !model}
+          disabled={isLoading || !prompt || !model || isOutOfUses}
           className="w-full md:w-auto px-12 py-3 font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-lg hover:from-cyan-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-in-out transform hover:scale-105"
         >
           {isLoading ? 'Analyzing...' : 'Generate & Validate'}
