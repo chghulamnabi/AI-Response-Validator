@@ -1,0 +1,5 @@
+{
+  "name": "AI Response Validator",
+  "description": "An application to validate AI responses by checking for hallucinations, similarity scores, validity, and other metrics using the Gemini API.",
+  "requestFramePermissions": []
+}
